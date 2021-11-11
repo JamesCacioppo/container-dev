@@ -1,0 +1,22 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the container image
+      run: docker build . --file Dockerfile --tag obscuritylabs/dev-container:$(date +%s)
+      run: docker build . --file Dockerfile --tag obscuritylabs/dev-container:latest
+    - name: Push the container image
+      run: docker push obscuritylabs/dev-container:latest
+      run: docker push obscuritylabs/dev-container:$(date +%s)
