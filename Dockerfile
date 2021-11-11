@@ -1,9 +1,10 @@
 FROM ubuntu:21.04
+# Ubuntu 22.04 is not currently supported by Docker
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update \
   && apt install -y --no-install-recommends tzdata \
-  && apt install -y git vim curl jq ca-certificates curl gnupg lsb-release \
+  && apt install -y git vim curl jq ca-certificates gnupg lsb-release software-properties-common \
   && rm -rf /bar/lib/apt/lists/*
 
 # Install Docker
@@ -24,7 +25,15 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/s
   && chmod 700 get_helm.sh \
   && ./get_helm.sh
 
+# Install Terraform
+RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+RUN apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+  && apt update \
+  && apt install terraform
 
+# Install Tilt
+RUN curl -fsSL https://github.com/tilt-dev/tilt/releases/download/v0.22.15/tilt.0.22.15.linux.$(uname -m).tar.gz | tar -xzv tilt \
+  && mv tilt /usr/local/bin/tilt
 
 ENTRYPOINT ["bash"]
 
