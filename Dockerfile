@@ -15,6 +15,7 @@ RUN apt update \
   build-essential \
   groff \
   less \
+  unzip \
   && rm -rf /bar/lib/apt/lists/*
 
 # Install Docker
