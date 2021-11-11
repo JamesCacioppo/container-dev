@@ -4,7 +4,17 @@ FROM ubuntu:21.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update \
   && apt install -y --no-install-recommends tzdata \
-  && apt install -y git vim curl jq ca-certificates gnupg lsb-release software-properties-common \
+  && apt install -y git \
+  vim \
+  curl \
+  jq \
+  ca-certificates \
+  gnupg \
+  lsb-release \
+  software-properties-common \
+  build-essential \
+  groff \
+  less \
   && rm -rf /bar/lib/apt/lists/*
 
 # Install Docker
@@ -34,6 +44,12 @@ RUN apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(ls
 # Install Tilt
 RUN curl -fsSL https://github.com/tilt-dev/tilt/releases/download/v0.22.15/tilt.0.22.15.linux.$(uname -m).tar.gz | tar -xzv tilt \
   && mv tilt /usr/local/bin/tilt
+
+# Install AWSCLI
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+  && unzip awscliv2.zip \
+  && ./aws/install
 
 ENTRYPOINT ["bash"]
 
