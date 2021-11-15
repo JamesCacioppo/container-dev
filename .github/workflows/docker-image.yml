@@ -26,7 +26,7 @@ jobs:
         flavor: |
           latest=true
         tags: |
-          type=ref,event=push
+          type=ref,event=branch
           type=ref,event=pr
           type=semver,pattern={{version}}
     - name: Build and push container image
