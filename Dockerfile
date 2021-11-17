@@ -1,13 +1,15 @@
 FROM ubuntu:21.04
-# Ubuntu 22.04 is not currently supported by Docker
 
+# Install minimum tools to execute install-container.sh
 ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /root
 RUN apt update \
   && apt install -y --no-install-recommends tzdata \
   && apt install -y git \
+  zsh \
+  curl \
   vim \
   curl \
-  jq \
   ca-certificates \
   gnupg \
   lsb-release \
@@ -16,41 +18,58 @@ RUN apt update \
   groff \
   less \
   unzip \
-  && rm -rf /bar/lib/apt/lists/*
+  pip \
+  iproute2 \
+  dnsutils \
+  mtr \
+  && rm -rf /var/lib/apt/lists/*
 
-# Install Docker
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-RUN echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-RUN apt update && apt install -y docker-ce docker-ce-cli containerd.io
+# Set ZSH as default shell
+RUN chsh -s $(which zsh)
 
-# Install Kubectl
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-  && curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256" \
-  && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
-  && kubectl version --client
+# Install OhMyZsh
+RUN chmod g-w,o-w /usr/local/share/zsh \
+  && chmod g-w,o-w /usr/local/share/zsh/site-functions \
+  && export ZSH="$HOME/.oh-my-zsh" \
+  && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install Helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
-  && chmod 700 get_helm.sh \
-  && ./get_helm.sh
+# Clone dotfiles repo and link files
+RUN git clone https://github.com/JamesCacioppo/mydotfiles.git /root/mydotfiles \
+  && if [ -f /root/.zshrc ]; then rm -f /root/.zshrc; fi \
+  && ln -sv /root/mydotfiles/linux.zshrc /root/.zshrc \
+  && ln -sv /root/mydotfiles/.bash_profile /root/.bash_profile \
+  && ln -sv /root/mydotfiles/.gitconfig /root/.gitconfig \
+  && ln -sv /root/mydotfiles/.vimrc /root/.vimrc
 
-# Install Terraform
-RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
-RUN apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-  && apt update \
-  && apt install terraform
+# Install Brew
+RUN echo | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)" > /dev/null \
+  && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /root/.zshrc \
+  && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
-# Install Tilt
-RUN curl -fsSL https://github.com/tilt-dev/tilt/releases/download/v0.22.15/tilt.0.22.15.linux.$(uname -m).tar.gz | tar -xzv tilt \
-  && mv tilt /usr/local/bin/tilt
+# Bundle Install
+WORKDIR /root/mydotfiles
+RUN /home/linuxbrew/.linuxbrew/bin/brew bundle install --file=Brewfile.container
+RUN /home/linuxbrew/.linuxbrew/bin/brew link docker
 
 # Install AWSCLI
-
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
   && unzip awscliv2.zip \
-  && ./aws/install
+  && ./aws/install \
+  && rm awscliv2.zip
 
-ENTRYPOINT ["bash"]
+# Install OhMyTmux
+RUN git clone https://github.com/JamesCacioppo/.tmux.git /root/.tmux \
+  && ln -sv /root/.tmux/.tmux.conf /root/tmux.conf \
+  && ln -sv /root/.tmux/.tmux.conf.local /root/tmux.conf.local
 
+# Install Vim-Plug, Vundle, and plugins
+RUN curl -fsSLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+RUN git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+RUN [ "/bin/bash", "-c", "vim +'PlugInstall --sync' +qa" ]
+RUN [ "/bin/bash", "-c", "vim +'PluginInstall --sync' +qa" ]
+
+# Configure Poetry autocompletion
+RUN mkdir /root/.oh-my-zsh/custom/plugins/poetry \
+  && /home/linuxbrew/.linuxbrew/bin/poetry completions zsh > /root/.oh-my-zsh/custom/plugins/poetry/_poetry
+
+ENTRYPOINT ["zsh"]
