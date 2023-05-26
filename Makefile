@@ -2,13 +2,13 @@ TAG ?= latest
 
 .PHONY: build
 build:
-	docker build -t obscuritylabs/dev-container:${TAG} -f Dockerfile .
+	docker build -t jcacioppo/dev-container:${TAG} -f Dockerfile .
 .PHONY: push
 push:
-	docker push obscuritylabs/dev-container:${TAG}
+	docker push jcacioppo/dev-container:${TAG}
 .PHONY: pull
 pull:
-	docker pull obscuritylabs/dev-container:${TAG}
+	docker pull jcacioppo/dev-container:${TAG}
 .PHONY: run
 run:
 	docker run \
@@ -17,4 +17,4 @@ run:
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-w /root \
 		--name dev-container \
-		-it obscuritylabs/dev-container:${TAG}
+		-it jcacioppo/dev-container:${TAG}

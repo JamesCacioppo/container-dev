@@ -22,7 +22,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v3
       with:
-        images: obscuritylabs/dev-container
+        images: jcacioppo/dev-container
         flavor: |
           latest=true
         tags: |
