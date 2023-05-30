@@ -59,8 +59,8 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 
 # Install OhMyTmux
 RUN git clone https://github.com/JamesCacioppo/.tmux.git /root/.tmux \
-  && ln -sv /root/.tmux/.tmux.conf /root/tmux.conf \
-  && ln -sv /root/.tmux/.tmux.conf.local /root/tmux.conf.local
+  && ln -sv /root/.tmux/.tmux.conf /root/.tmux.conf \
+  && ln -sv /root/.tmux/.tmux.conf.local /root/.tmux.conf.local
 
 # Install Vim-Plug, Vundle, and plugins
 RUN curl -fsSLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
